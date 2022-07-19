@@ -2,7 +2,6 @@ const jwt = require("jsonwebtoken");
 const apiResponse = require("../helpers/apiResponse");
 const verifyUser = (req,res,next)=>{
     const token = (req.headers.authorization).split(" ");
-    console.log(token[1])
      try{
         const verifyUser = jwt.verify(token[1], process.env.JWT_SECRET);
         
