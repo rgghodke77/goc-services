@@ -97,7 +97,43 @@ exports.login = [
 			if (!errors.isEmpty()) {
 				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
 			}else {
-				UserModel.findOne({mobile : req.body.mobile}).then(user => {
+				UserModel
+				// .aggregate([
+
+					
+				// 	// Join with user_role table
+				// 	{
+				// 		$lookup:{
+				// 			from: "Role", 
+				// 			localField: "roleId", 
+				// 			foreignField: "_id",
+				// 			as: "user_role"
+				// 		}
+				// 	},
+				// 	{   $unwind:"$user_role" },
+				
+				// 	// define some conditions here 
+				// 	{
+				// 		$match:{
+				// 			$and:[{mobile : req.body.mobile}]
+				// 		}
+				// 	},
+				
+				// 	// define which fields are you want to fetch
+				// 	{   
+				// 		$project:{
+				// 			_id : 1,
+				// 			firstName : 1,
+				// 			lastName : 1,
+				// 			mobile : 1,
+				// 			password:1,
+				// 			role : "$user_role.role",
+				// 		} 
+				// 	}
+				// ])
+				 .findOne({mobile : req.body.mobile})
+				.then(user => {
+					//console.log(user)
 					if (user) {
 						//Compare given password with db's hash.
 						bcrypt.compare(req.body.password,user.password,function (err,same) {

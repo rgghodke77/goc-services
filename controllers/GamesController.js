@@ -24,7 +24,7 @@ function BookData(data) {
  * @returns {Object}
  */
 exports.gamesList = [
-	verifyUser,
+	//verifyUser,
 	function (req, res) {
 		try {
 			Game.find().then((games)=>{
@@ -49,12 +49,11 @@ exports.gamesList = [
  * @returns {Object}
  */
 exports.mergeGame = [
-    verifyUser,
+    //verifyUser,
 	function (req, res) {
 		
 		try {
-            console.log(req.body)
-			Game.create({gameName: req.body.gameName})
+           Game.create({gameName: req.body.gameName})
             .then((game)=>{                
 				if(game !== null){
 					return apiResponse.successResponseWithData(res, "Operation success", game);
@@ -70,7 +69,7 @@ exports.mergeGame = [
 	}
 ];
 exports.mergeRole = [
-    verifyUser,
+    //verifyUser,
 	function (req, res) {
 		
 		try {
@@ -90,7 +89,7 @@ exports.mergeRole = [
 	}
 ];
 exports.getRoles = [
-    verifyUser,
+    //verifyUser,
     function (req, res) {
 		
 		try {
@@ -169,7 +168,7 @@ exports.bookStore = [
  * @returns {Object}
  */
 exports.bookUpdate = [
-	auth,
+	//auth,
 	body("title", "Title must not be empty.").isLength({ min: 1 }).trim(),
 	body("description", "Description must not be empty.").isLength({ min: 1 }).trim(),
 	body("isbn", "ISBN must not be empty").isLength({ min: 1 }).trim().custom((value,{req}) => {
