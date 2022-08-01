@@ -39,36 +39,62 @@ exports.register = [
 				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
 			}else {
 				//hash input password
-				bcrypt.hash(req.body.password,10,function(err, hash) {
-					// generate OTP for confirmation
-					let otp = utility.randomNumber(4);
-					// Create User object with escaped and trimmed data
-					var user = new UserModel(
-						{
-							firstName: req.body.firstName,
-							lastName: req.body.lastName,
-							mobile: req.body.email,
-							password: hash,
-							gender:req.body.gender?req.body.gender:'',
-							mobile:req.body.mobile,
-							gameId:req.body.gameId,
-							roleId:req.body.roleId,
+				
+					bcrypt.hash(req.body.password,10,function(err, hash) {
+						// generate OTP for confirmation
+						let otp = utility.randomNumber(4);
+						// Create User object with escaped and trimmed data
+						if(!req.body._id){
+							var user = new UserModel(
+								{
+									firstName: req.body.firstName,
+									lastName: req.body.lastName,
+									password: hash,
+									gender:req.body.gender?req.body.gender:'',
+									mobile:req.body.mobile,
+									gameId:req.body.gameId,
+									roleId:req.body.roleId,
+								}
+							);
+							
+								// Save user.
+								user.save(function (err) {
+									if (err) { return apiResponse.ErrorResponse(res, err); }
+									let userData = {
+										_id: user._id,
+										firstName: user.firstName,
+										lastName: user.lastName,
+										mobile: user.mobile
+									};
+									return apiResponse.successResponseWithData(res,"Registration Success.", userData);
+								});
+						} else{
+							UserModel.update(
+								{_id:req.body._id},
+								{
+									$set:{
+										firstName: req.body.firstName,
+										lastName: req.body.lastName,
+										password: hash,
+										gender:req.body.gender?req.body.gender:'',
+										mobile:req.body.mobile,
+										gameId:req.body.gameId,
+										roleId:req.body.roleId,
+										status:req.body.status
+									}
+								}
+							)
+							.then((user)=>{                
+								if(user !== null){
+									return apiResponse.successResponseWithData(res, "Operation success", user);
+								}else{
+									return apiResponse.successResponseWithData(res, "Operation success", {});
+								}
+							});
 						}
-					);
+					});
 					
-						// Save user.
-						user.save(function (err) {
-							if (err) { return apiResponse.ErrorResponse(res, err); }
-							let userData = {
-								_id: user._id,
-								firstName: user.firstName,
-								lastName: user.lastName,
-								mobile: user.mobile
-							};
-							return apiResponse.successResponseWithData(res,"Registration Success.", userData);
-						});
 					
-				});
 			}
 		} catch (err) {
 			//throw error in json response with status 500.
@@ -172,6 +198,27 @@ exports.login = [
 			return apiResponse.ErrorResponse(res, err);
 		}
 	}];
+
+	exports.getUsers = [
+		//verifyUser,
+		function (req, res) {
+			
+			try {
+				UserModel.find()
+				.then((users)=>{                
+					if(users !== null){
+						return apiResponse.successResponseWithData(res, "Operation success", users);
+					}else{
+						return apiResponse.successResponseWithData(res, "Operation success", {});
+					}
+				});
+			} catch (err) {
+				//throw error in json response with status 500. 
+				console.log(err)
+				return apiResponse.ErrorResponse(res, err);
+			}
+		}
+	];
 
 /**
  * Verify Confirm otp.

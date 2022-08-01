@@ -53,14 +53,33 @@ exports.mergeGame = [
 	function (req, res) {
 		
 		try {
-           Game.create({gameName: req.body.gameName})
-            .then((game)=>{                
+		if(!req.body._id){
+			Game.create({gameName: req.body.gameName})
+				.then((game)=>{                
+					if(game !== null){
+						return apiResponse.successResponseWithData(res, "Operation success", game);
+					}else{
+						return apiResponse.successResponseWithData(res, "Operation success", {});
+					}
+				});
+		} else{
+			Game.update(
+				{_id:req.body._id},
+				{
+					$set:{
+						gameName:req.body.gameName,
+						status:req.body.status
+					}
+				}
+			)
+			.then((game)=>{                
 				if(game !== null){
 					return apiResponse.successResponseWithData(res, "Operation success", game);
 				}else{
 					return apiResponse.successResponseWithData(res, "Operation success", {});
 				}
 			});
+		}
 		} catch (err) {
 			//throw error in json response with status 500. 
             console.log(err)
@@ -73,14 +92,31 @@ exports.mergeRole = [
 	function (req, res) {
 		
 		try {
-            Role.create({role: req.body.role})
-            .then((role)=>{                
-				if(role !== null){
-					return apiResponse.successResponseWithData(res, "Operation success", role);
-				}else{
-					return apiResponse.successResponseWithData(res, "Operation success", {});
+			if(!req.body._id){
+					Role.create({role: req.body.role})
+					.then((role)=>{                
+						if(role !== null){
+							return apiResponse.successResponseWithData(res, "Operation success", role);
+						}else{
+							return apiResponse.successResponseWithData(res, "Operation success", {});
+						}
+					});
+				} else{
+					Role.update(
+						{_id:req.body._id},
+						{$set:{
+							role:req.body.role,
+							status:0
+						}}
+					)
+					.then((role)=>{                
+						if(role !== null){
+							return apiResponse.successResponseWithData(res, "Operation success", role);
+						}else{
+							return apiResponse.successResponseWithData(res, "Operation success", {});
+						}
+					});
 				}
-			});
 		} catch (err) {
 			//throw error in json response with status 500. 
             console.log(err)
