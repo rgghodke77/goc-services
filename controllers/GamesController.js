@@ -106,7 +106,7 @@ exports.mergeRole = [
 						{_id:req.body._id},
 						{$set:{
 							role:req.body.role,
-							status:0
+							status:req.body.status
 						}}
 					)
 					.then((role)=>{                
