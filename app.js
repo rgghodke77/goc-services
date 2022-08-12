@@ -7,7 +7,6 @@ var indexRouter = require("./routes/index");
 var apiRouter = require("./routes/api");
 var apiResponse = require("./helpers/apiResponse");
 var cors = require("cors");
-
 // DB connection
 var MONGODB_URL = process.env.MONGODB_URL;
 console.log("mongodbURL",MONGODB_URL)
