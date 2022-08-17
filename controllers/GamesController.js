@@ -1,6 +1,9 @@
  const Book = require("../models/BookModel");
 const Game = require("../models/GameModel");
 const Role = require("../models/RoleModel");
+const Team = require("../models/TeamModel");
+const Player = require("../models/PlayerModel");
+const UserModel = require("../models/UserModel");
 const { body,validationResult } = require("express-validator");
 const { sanitizeBody } = require("express-validator");
 const apiResponse = require("../helpers/apiResponse");
@@ -8,7 +11,8 @@ const auth = require("../middlewares/jwt");
 var mongoose = require("mongoose");
 mongoose.set("useFindAndModify", false);
 var verifyUser = require('../middlewares/authentication')
-
+const multer = require('multer');
+const path = require('path');
 // Book Schema
 function BookData(data) {
 	this.id = data._id;
@@ -50,36 +54,44 @@ exports.gamesList = [
  */
 exports.mergeGame = [
     //verifyUser,
+	body("gameName").isLength({ min: 1 }).trim().withMessage("gameName must be specified.")
+		.isAlphanumeric().withMessage("gameName has non-alphanumeric characters."),
 	function (req, res) {
 		
 		try {
-		if(!req.body._id){
-			Game.create({gameName: req.body.gameName})
-				.then((game)=>{                
-					if(game !== null){
-						return apiResponse.successResponseWithData(res, "Operation success", game);
-					}else{
-						return apiResponse.successResponseWithData(res, "Operation success", {});
-					}
-				});
-		} else{
-			Game.update(
-				{_id:req.body._id},
-				{
-					$set:{
-						gameName:req.body.gameName,
-						status:req.body.status
-					}
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
+				if(!req.body._id){
+					Game.create({gameName: req.body.gameName})
+						.then((game)=>{                
+							if(game !== null){
+								return apiResponse.successResponseWithData(res, "Operation success", game);
+							}else{
+								return apiResponse.successResponseWithData(res, "Operation success", {});
+							}
+						});
+				} else{
+					Game.update(
+						{_id:req.body._id},
+						{
+							$set:{
+								gameName:req.body.gameName,
+								status:req.body.status
+							}
+						}
+					)
+					.then((game)=>{                
+						if(game !== null){
+							return apiResponse.successResponseWithData(res, "Operation success", game);
+						}else{
+							return apiResponse.successResponseWithData(res, "Operation success", {});
+						}
+					});
 				}
-			)
-			.then((game)=>{                
-				if(game !== null){
-					return apiResponse.successResponseWithData(res, "Operation success", game);
-				}else{
-					return apiResponse.successResponseWithData(res, "Operation success", {});
-				}
-			});
-		}
+	}
 		} catch (err) {
 			//throw error in json response with status 500. 
             console.log(err)
@@ -89,9 +101,16 @@ exports.mergeGame = [
 ];
 exports.mergeRole = [
     //verifyUser,
+	body("role").isLength({ min: 1 }).trim().withMessage("Role must be specified.")
+		.isAlphanumeric().withMessage("Role has non-alphanumeric characters."),
 	function (req, res) {
 		
 		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
 			if(!req.body._id){
 					Role.create({role: req.body.role})
 					.then((role)=>{                
@@ -117,6 +136,112 @@ exports.mergeRole = [
 						}
 					});
 				}
+			}
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
+
+/** Create Modify team */
+exports.mergeTeam = [
+    //verifyUser,
+	body("teamName").isLength({ min: 1 }).trim().withMessage("teamName must be specified."),
+	body("gameId").isLength({ min: 1 }).trim().withMessage("gameId must be specified."),
+	body("createdBy").isLength({ min: 1 }).trim().withMessage("createdBy must be specified."),
+	body("players").isArray().withMessage("Players must be array."),
+	function (req, res) {
+		
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
+			if(!req.body._id){
+				Team.create({
+					teamName: req.body.teamName,
+					teamLogo: req.body.teamLogo,
+					gameId: req.body.gameId,
+					createdBy: req.body.createdBy,
+					
+				})
+					.then((team)=>{                
+						if(team !== null){
+							// return apiResponse.successResponseWithData(res, "Operation success", team);
+							UserModel.findOne({_id:req.body.createdBy}).then((user)=>{
+								if(user !== null){
+									Player.create(
+										{
+											playerName:user.firstName+" "+user.lastName,
+											playerRole:'',
+											teamId:team._id,
+											userId:req.body.createdBy,
+											mobile:user.mobile,
+											captain:1,
+
+										}
+									).then((player)=>{
+										if(player !== null){
+											let teamId = team._id;
+											Team.aggregate([
+												{$match : {_id : teamId}},
+												{ 
+													$lookup:
+													{
+													   from: "players",
+													   localField: "_id",
+													   foreignField: "teamId",
+													   as: "players",
+													   
+													}
+												},
+												{ $project : { 
+													"players.captain" : 1,
+													"players.status" : 1,
+													"players.playerName" : 1,
+													"players.playerRole" : 1,
+													"players.mobile" : 1,
+													"players._id":1,
+													teamName:1,
+													teamLogo:1
+
+												 } }
+											]).then((teaminfo)=>{
+												if(teaminfo !== null){
+													return apiResponse.successResponseWithData(res, "Operation success", teaminfo);
+												}
+											})
+										}
+									})
+								}
+							})
+
+						}else{
+							return apiResponse.successResponseWithData(res, "Operation success", {});
+						}
+					});
+				} else{
+					Team.update(
+						{_id:req.body._id},
+						{$set:{
+							teamName: req.body.teamName,
+							teamLogo: req.body.teamLogo,
+							gameId: req.body.gameId,
+							status:req.body.status
+						}}
+					)
+					.then((team)=>{                
+						if(team !== null){
+							return apiResponse.successResponseWithData(res, "Operation success", team);
+						}else{
+							return apiResponse.successResponseWithData(res, "Operation success", {});
+						}
+					});
+				}
+			}
 		} catch (err) {
 			//throw error in json response with status 500. 
             console.log(err)
@@ -144,6 +269,47 @@ exports.getRoles = [
 		}
 	}
 ];
+
+/** Upload Images */
+
+const imageStorage = multer.diskStorage({
+    // Destination to store image     
+    destination: 'assets/images/userUploads', 
+      filename: (req, file, cb) => {
+          cb(null, file.fieldname + '_' + Date.now() 
+             + path.extname(file.originalname))
+            // file.fieldname is name of the field (image)
+            // path.extname get the uploaded file extension
+    }
+});
+const imageUpload = multer({
+	storage: imageStorage,
+	limits: {
+	  fileSize: 1000000 // 1000000 Bytes = 1 MB
+	},
+	fileFilter(req, file, cb) {
+	  if (!file.originalname.match(/\.(png|jpg)$/)) { 
+		 // upload only png and jpg format
+		 return cb(new Error('Please upload a Image'))
+	   }
+	 cb(undefined, true)
+  }
+}) 
+exports.uploadImage = [
+	//verifyUser,
+	imageUpload.single('image'),
+	function (req, res) {
+		
+		try {
+			//res.send(req.file)
+			return apiResponse.successResponseWithData(res, "Operation success", req.file);
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+]
 
 /**
  * Book store.
