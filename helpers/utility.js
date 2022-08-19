@@ -1,3 +1,4 @@
+var mongoose = require("mongoose");
 exports.randomNumber = function (length) {
 	var text = "";
 	var possible = "123456789";
@@ -7,3 +8,7 @@ exports.randomNumber = function (length) {
 	}
 	return Number(text);
 };
+
+exports.generateMongoDbObjectId = function (string) {
+	return mongoose.Types.ObjectId(string)
+}

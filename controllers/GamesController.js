@@ -7,12 +7,14 @@ const UserModel = require("../models/UserModel");
 const { body,validationResult } = require("express-validator");
 const { sanitizeBody } = require("express-validator");
 const apiResponse = require("../helpers/apiResponse");
+
 const auth = require("../middlewares/jwt");
 var mongoose = require("mongoose");
 mongoose.set("useFindAndModify", false);
 var verifyUser = require('../middlewares/authentication')
 const multer = require('multer');
 const path = require('path');
+var utility = require('../helpers/utility')
 // Book Schema
 function BookData(data) {
 	this.id = data._id;
@@ -181,13 +183,14 @@ exports.mergeTeam = [
 											userId:req.body.createdBy,
 											mobile:user.mobile,
 											captain:1,
+											viceCaptain:0,
 
 										}
 									).then((player)=>{
 										if(player !== null){
 											let teamId = team._id;
 											Team.aggregate([
-												{$match : {_id : teamId}},
+												{$match : {_id : utility.generateMongoDbObjectId(teamId)}},
 												{ 
 													$lookup:
 													{
@@ -200,6 +203,7 @@ exports.mergeTeam = [
 												},
 												{ $project : { 
 													"players.captain" : 1,
+													"players.viceCaptain" : 1,
 													"players.status" : 1,
 													"players.playerName" : 1,
 													"players.playerRole" : 1,
@@ -211,7 +215,11 @@ exports.mergeTeam = [
 												 } }
 											]).then((teaminfo)=>{
 												if(teaminfo !== null){
-													return apiResponse.successResponseWithData(res, "Operation success", teaminfo);
+													return apiResponse.successResponseWithData(res, "Operation success", {
+														status:true,
+														data:teaminfo,
+														errorData:[]
+													});
 												}
 											})
 										}
@@ -223,9 +231,9 @@ exports.mergeTeam = [
 							return apiResponse.successResponseWithData(res, "Operation success", {});
 						}
 					});
-				} else{
+				} else {
 					Team.update(
-						{_id:req.body._id},
+						{_id:utility.generateMongoDbObjectId(req.body._id)},
 						{$set:{
 							teamName: req.body.teamName,
 							teamLogo: req.body.teamLogo,
@@ -233,14 +241,177 @@ exports.mergeTeam = [
 							status:req.body.status
 						}}
 					)
-					.then((team)=>{                
+					.then(async(team)=>{                
 						if(team !== null){
-							return apiResponse.successResponseWithData(res, "Operation success", team);
+							if(req.body.status !== 0){
+								let players = req.body.players;
+								let playerError = [];
+									await players.map(async(item,i)=>{
+										
+											let findExistingPlayer = await Player.findOne({$and:[{mobile:item.mobile},{teamId:{$ne:utility.generateMongoDbObjectId(req.body._id)}}] });
+											
+
+											if(findExistingPlayer !== null){
+												item.errorMessage = "Player is already register with other team with this mobile number"
+												playerError.push(item);
+												console.log(playerError)
+											} else {
+												let playerInfo = await Player.findOne({mobile:item.mobile});
+												if(!item._id && playerInfo === null){
+													let userInfo = await UserModel.findOne({mobile:item.mobile});
+													if(userInfo !== null){
+														console.log(userInfo)
+														await Player.create({
+															playerName:item.playerName,
+															playerRole:item.playerRole,
+															captain:item.captain,
+															viceCaptain:item.viceCaptain,
+															status:item.status,
+															mobile:item.mobile,
+															teamId:utility.generateMongoDbObjectId(req.body._id),
+															userId:utility.generateMongoDbObjectId(userInfo._id),
+														})
+													}
+												} else {
+													await Player.update({_id:utility.generateMongoDbObjectId(item._id?item._id:playerInfo._id)},
+													{
+														$set:{
+															playerName:item.playerName,
+															playerRole:item.playerRole,
+															captain:item.captain,
+															viceCaptain:item.viceCaptain,
+															status:item.status,
+															mobile:item.mobile,
+														}
+													}
+													)
+												}
+											}
+											if(i === (players.length-1)){
+											let teamId = req.body._id;
+											Team.aggregate([
+												{$match : {_id : utility.generateMongoDbObjectId(teamId)}},
+												{ 
+													$lookup:
+													{
+													   from: "players",
+													   localField: "_id",
+													   foreignField: "teamId",
+													   as: "players",
+													   
+													}
+												},
+												{ $project : { 
+													"players.captain" : 1,
+													"players.viceCaptain" : 1,
+													"players.status" : 1,
+													"players.playerName" : 1,
+													"players.playerRole" : 1,
+													"players.mobile" : 1,
+													"players._id":1,
+													teamName:1,
+													teamLogo:1
+
+												 } }
+											]).then((teaminfo)=>{
+												if(teaminfo !== null){
+													return apiResponse.successResponseWithData(res, "Operation success", {
+														status:true,
+														data:teaminfo,
+														errorData:playerError
+													});
+												}
+											})
+												// return apiResponse.successResponseWithData(res, "Operation success", {
+												// 	status:true,
+												// 	errorData:playerError
+												// });
+											}
+										
+								 	})
+								
+							}
+							//return apiResponse.successResponseWithData(res, "Operation success", team);
 						}else{
 							return apiResponse.successResponseWithData(res, "Operation success", {});
 						}
 					});
 				}
+			}
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
+exports.getTeams = [
+    //verifyUser,
+    function (req, res) {
+		
+		try {
+			if(!req.body._id){
+					Team.aggregate([
+						// {$match : {_id : teamId}},
+						{ 
+							$lookup:
+							{
+							from: "players",
+							localField: "_id",
+							foreignField: "teamId",
+							as: "players",
+							
+							}
+						},
+						{ $project : { 
+							"players.captain" : 1,
+							"players.viceCaptain" : 1,
+							"players.status" : 1,
+							"players.playerName" : 1,
+							"players.playerRole" : 1,
+							"players.mobile" : 1,
+							"players._id":1,
+							teamName:1,
+							teamLogo:1
+
+						} }
+					]).then((teaminfo)=>{
+						if(teaminfo !== null){
+							return apiResponse.successResponseWithData(res, "Operation success", teaminfo);
+						}
+					})
+			} else {
+				let teamId = utility.generateMongoDbObjectId(req.body._id);
+				
+				Team.aggregate([
+				   {$match : {_id : teamId}},
+				   { 
+						$lookup:
+						{
+						from: "players",
+						localField: "_id",
+						foreignField: "teamId",
+						as: "players",
+						
+						}
+					},
+					{ $project : { 
+						"players.captain" : 1,
+						"players.viceCaptain" : 1,
+						"players.status" : 1,
+						"players.playerName" : 1,
+						"players.playerRole" : 1,
+						"players.mobile" : 1,
+						"players._id":1,
+						teamName:1,
+						teamLogo:1
+
+					} },
+				]).then((teaminfo)=>{
+					if(teaminfo !== null){
+						return apiResponse.successResponseWithData(res, "Operation success", teaminfo);
+					}
+				})
 			}
 		} catch (err) {
 			//throw error in json response with status 500. 

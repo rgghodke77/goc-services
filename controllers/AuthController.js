@@ -29,7 +29,7 @@ exports.register = [
 		.isNumeric().withMessage("Mobile number has non-numeric characters."),
 	body("gameId").isLength({ min: 1 }).trim().withMessage("Game must be selected."),
 	body("roleId").isLength({ min: 1 }).trim().withMessage("Role must be selected."),
-	body("password").isLength({ min: 6 }).trim().withMessage("Password must be 6 characters or greater."),
+	body("password").isLength({ min: 4 }).trim().withMessage("Password must be 6 characters or greater."),
 	(req, res) => {
 		try {
 			// Extract the validation errors from a request.

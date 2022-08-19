@@ -9,5 +9,6 @@ router.post("/mergeRole", GamesController.mergeRole);
 router.post("/getRoles", GamesController.getRoles);
 router.post("/uploadImage", GamesController.uploadImage);
 router.post("/mergeTeam", GamesController.mergeTeam);
+router.post("/getTeams", GamesController.getTeams);
 
 module.exports = router;

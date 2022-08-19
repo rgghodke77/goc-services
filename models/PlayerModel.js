@@ -9,6 +9,7 @@ var PlayerSchema = new Schema({
 	teamId: { type: Schema.ObjectId, ref: "Team", required: true },
 	userId: { type: Schema.ObjectId, ref: "User", required: true },
 	captain: { type: Boolean,default: 0 },
+	viceCaptain: { type: Boolean,default: 0},
 	status: {type: Boolean,default: 1},
 }, {timestamps: true});
 
