@@ -10,5 +10,6 @@ router.post("/getRoles", GamesController.getRoles);
 router.post("/uploadImage", GamesController.uploadImage);
 router.post("/mergeTeam", GamesController.mergeTeam);
 router.post("/getTeams", GamesController.getTeams);
+router.post("/getUserForCreateTeam", GamesController.getUserForCreateTeam);
 
 module.exports = router;

@@ -420,6 +420,55 @@ exports.getTeams = [
 		}
 	}
 ];
+exports.getUserForCreateTeam = [
+    //verifyUser,
+    function (req, res) {
+		
+		try {
+						UserModel.aggregate([
+						{ 
+							$lookup:
+							{
+							from: "players",
+							'let': {
+								userId: '$_id'
+							   },
+							pipeline: [
+								{
+								 $match: {
+								  $expr: {
+								   $eq: [
+									'$userId',
+									'$$userId'
+								   ]
+								  }
+								 }
+								}
+							],
+							as: "players",
+							
+							}
+						},
+						{ $project : { 
+							firstName:1,
+							lastName:1,
+							_id:1,
+							"players.playerName":1
+
+						} }
+					]).then((users)=>{
+						if(users !== null){
+							return apiResponse.successResponseWithData(res, "Operation success", users.filter(dt=>dt.players.length === 0));
+						}
+					})
+			
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
 exports.getRoles = [
     //verifyUser,
     function (req, res) {
