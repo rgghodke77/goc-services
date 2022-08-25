@@ -474,7 +474,7 @@ exports.getRoles = [
     function (req, res) {
 		
 		try {
-            Role.find()
+            Role.find({ role: { $ne: 'admin' }})
             .then((role)=>{                
 				if(role !== null){
 					return apiResponse.successResponseWithData(res, "Operation success", role);
