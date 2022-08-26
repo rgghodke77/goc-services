@@ -8,6 +8,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const mailer = require("../helpers/mailer");
 const { constants } = require("../helpers/constants");
+const RoleModel = require("../models/RoleModel");
+const GameModel = require("../models/GameModel");
 
 /**
  * User registration.
@@ -27,7 +29,7 @@ exports.register = [
 		.isAlphanumeric().withMessage("Last name has non-alphanumeric characters."),
 	body("mobile").isLength({ min: 10 }).trim().withMessage("Mobile number must be 10 characters or greater.")
 		.isNumeric().withMessage("Mobile number has non-numeric characters."),
-	body("gameId").isLength({ min: 1 }).trim().withMessage("Game must be selected."),
+	// body("gameId").isLength({ min: 1 }).trim().withMessage("Game must be selected."),
 	body("roleId").isLength({ min: 1 }).trim().withMessage("Role must be selected."),
 	body("password").isLength({ min: 4 }).trim().withMessage("Password must be 6 characters or greater."),
 	(req, res) => {
@@ -40,9 +42,10 @@ exports.register = [
 			}else {
 				//hash input password
 				
-					bcrypt.hash(req.body.password,10,function(err, hash) {
+					bcrypt.hash(req.body.password,10,  async(err, hash)=> {
 						// generate OTP for confirmation
 						let otp = utility.randomNumber(4);
+						let defaultGame = await GameModel.findOne({gameName:'Cricket'});
 						// Create User object with escaped and trimmed data
 						if(!req.body._id){
 							var user = new UserModel(
@@ -52,7 +55,7 @@ exports.register = [
 									password: hash,
 									gender:req.body.gender?req.body.gender:'',
 									mobile:req.body.mobile,
-									gameId:req.body.gameId,
+									gameId:defaultGame._id,
 									roleId:req.body.roleId,
 								}
 							);
@@ -78,7 +81,7 @@ exports.register = [
 										password: hash,
 										gender:req.body.gender?req.body.gender:'',
 										mobile:req.body.mobile,
-										gameId:req.body.gameId,
+										// gameId:req.body.gameId,
 										roleId:req.body.roleId,
 										status:req.body.status
 									}
