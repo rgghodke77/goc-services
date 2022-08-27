@@ -11,5 +11,8 @@ router.post("/uploadImage", GamesController.uploadImage);
 router.post("/mergeTeam", GamesController.mergeTeam);
 router.post("/getTeams", GamesController.getTeams);
 router.post("/getUserForCreateTeam", GamesController.getUserForCreateTeam);
+router.post("/deleteTeam", GamesController.deleteTeam);
+router.post("/deletePlayer", GamesController.deletePlayer);
+router.post("/wildSearchPlayers", GamesController.wildSearchPlayers);
 
 module.exports = router;

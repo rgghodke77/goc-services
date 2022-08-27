@@ -490,6 +490,130 @@ exports.getRoles = [
 	}
 ];
 
+/* delete team **/
+exports.deleteTeam = [
+    //verifyUser,
+	body("teamId").isLength({ min: 1 }).trim().withMessage("teamId must be specified.")
+		.isAlphanumeric().withMessage("teamId has non-alphanumeric characters."),
+    (req, res)=> {
+		
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
+            Team.deleteOne({ _id: { $eq: utility.generateMongoDbObjectId(req.body.teamId) }})
+            .then(async(deleteObject)=>{                
+				if(deleteObject !== null){
+					let deletePlayer = await Player.deleteMany({teamId:utility.generateMongoDbObjectId(req.body.teamId)});
+					if(deletePlayer !== null){
+						return apiResponse.successResponseWithData(res, "Operation success", deletePlayer);
+					} else {
+						return apiResponse.successResponseWithData(res, "Operation success", deleteObject);
+					}
+					
+				} else{
+					return apiResponse.successResponseWithData(res, "Operation success", {});
+				}
+			});
+		}
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
+/* delete player **/
+exports.deletePlayer = [
+    //verifyUser,
+	body("playerId").isLength({ min: 1 }).trim().withMessage("playerId must be specified."),
+    function (req, res) {
+		
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
+           Player.deleteOne({_id:{$eq:utility.generateMongoDbObjectId(req.body.playerId)}})
+            .then(async(deleteObject)=>{                
+				if(deleteObject !== null){
+						return apiResponse.successResponseWithData(res, "Operation success", deleteObject);
+					} else {
+						return apiResponse.successResponseWithData(res, "Operation success", {});
+					}
+			});
+		}
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
+/* wildSearchPlayers **/
+exports.wildSearchPlayers = [
+    //verifyUser,
+	body("searchText").isLength({ min: 1 }).trim().withMessage("searchText must be specified."),
+    function (req, res) {
+		
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
+				UserModel.aggregate([
+
+					// Join with players table
+					{
+						$lookup:{
+							from: "players",       // other table name
+							localField: "_id",   // name of users table field
+							foreignField: "userId", // name of userinfo table field
+							as: "players"         // alias for userinfo table
+						},
+						
+					},
+					
+					{
+						$match:{
+							$or:[{firstName:  {"$regex": req.body.searchText, "$options": "i"}},{lastName:  {"$regex": req.body.searchText, "$options": "i"}}]
+						}
+					},
+				
+					// define which fields are you want to fetch
+					{   
+						$project:{
+							_id : 1,
+							firstName : 1,
+							lastName : 1,
+							mobile : 1,
+							"players._id" : 1,
+							"players.playerName" : 1,
+							"players.teamId" : 1,
+							// team : "$team_info.teamName",
+						} 
+					}
+				])
+				.then(async(wildSearchPlayers)=>{            
+				if(wildSearchPlayers !== null){
+						return apiResponse.successResponseWithData(res, "Operation success", wildSearchPlayers);
+					} else {
+						return apiResponse.successResponseWithData(res, "Operation success", {});
+					}
+			});
+		}
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
+
 /** Upload Images */
 
 const imageStorage = multer.diskStorage({
