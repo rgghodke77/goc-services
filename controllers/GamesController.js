@@ -5,6 +5,7 @@ const Team = require("../models/TeamModel");
 const Player = require("../models/PlayerModel");
 const UserModel = require("../models/UserModel");
 const { body,validationResult } = require("express-validator");
+var unirest = require("unirest");
 const { sanitizeBody } = require("express-validator");
 const apiResponse = require("../helpers/apiResponse");
 
@@ -605,6 +606,63 @@ exports.wildSearchPlayers = [
 						return apiResponse.successResponseWithData(res, "Operation success", {});
 					}
 			});
+		}
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
+/* forgetPasswordOtp **/
+exports.forgetPasswordOtp = [
+    //verifyUser,
+	body("mobile").isLength({ min: 10 }).trim().withMessage("Mobile number must be 10 characters or greater.")
+		.isNumeric().withMessage("Mobile number has non-numeric characters."),
+     async(req, res) => {
+		
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
+				let userInfo = await UserModel.findOne({mobile:parseInt(req.body.mobile)});
+				if(userInfo != null){
+					const otp = Math.floor(1000 + Math.random() * 9000);
+					UserModel.updateOne({_id:userInfo._id},{
+						$set:{
+							otp:otp
+						}
+					}).then((updateUser)=>{
+						if(updateUser != null){
+							var req1 = unirest("POST", process.env.FAST_SMS_API_URL);
+
+							req1.headers({
+							  "authorization": process.env.FAST_SMS_API_KEY
+							});
+							
+							req1.form({
+							  "variables_values": otp,
+							  "route": "otp",
+							  "numbers": userInfo.mobile,
+							});
+							
+							req1.end(function (res1) {
+							  if (res.error) throw new Error(res.error);
+							
+							  console.log(res1.body);
+							  return apiResponse.successResponseWithData(res, "Otp is sent on your mobile number", otp);
+							});
+							
+						}
+					})
+					
+				} else {
+					return apiResponse.successResponseWithData(res, "User is not exist please signup", {});
+				}
+				
+
 		}
 		} catch (err) {
 			//throw error in json response with status 500. 

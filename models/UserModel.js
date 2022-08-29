@@ -9,6 +9,7 @@ var UserSchema = new mongoose.Schema({
 	status: {type: Boolean,default: 1},
 	gender: {type: String},
 	age: {type: Number},
+	otp: {type: Number},
 	gameId: { type: Schema.ObjectId, ref: "Game", required: true },
 	roleId: { type: Schema.ObjectId, ref: "Role", required: true },
 }, {timestamps: true});
