@@ -652,7 +652,7 @@ exports.forgetPasswordOtp = [
 							  if (res.error) throw new Error(res.error);
 							
 							  console.log(res1.body);
-							  return apiResponse.successResponseWithData(res, "Otp is sent on your mobile number", {validUser:true,otpSent:true,otp:otp});
+							  return apiResponse.successResponseWithData(res, "Otp is sent on your register mobile number", {validUser:true,otpSent:true,otp:otp});
 							});
 							
 						}
