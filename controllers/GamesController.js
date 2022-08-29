@@ -652,14 +652,14 @@ exports.forgetPasswordOtp = [
 							  if (res.error) throw new Error(res.error);
 							
 							  console.log(res1.body);
-							  return apiResponse.successResponseWithData(res, "Otp is sent on your mobile number", otp);
+							  return apiResponse.successResponseWithData(res, "Otp is sent on your mobile number", {validUser:true,otpSent:true,otp:otp});
 							});
 							
 						}
 					})
 					
 				} else {
-					return apiResponse.successResponseWithData(res, "User is not exist please signup", {});
+					return apiResponse.successResponseWithData(res, "User is not exist please signup", {validUser:false,otpSent:false,otp:''});
 				}
 				
 
