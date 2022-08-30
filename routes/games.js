@@ -15,5 +15,6 @@ router.post("/deleteTeam", GamesController.deleteTeam);
 router.post("/deletePlayer", GamesController.deletePlayer);
 router.post("/wildSearchPlayers", GamesController.wildSearchPlayers);
 router.post("/forgetPasswordOtp", GamesController.forgetPasswordOtp);
+router.post("/resetPassword", GamesController.resetPassword);
 
 module.exports = router;

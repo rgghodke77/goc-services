@@ -8,7 +8,7 @@ const { body,validationResult } = require("express-validator");
 var unirest = require("unirest");
 const { sanitizeBody } = require("express-validator");
 const apiResponse = require("../helpers/apiResponse");
-
+const bcrypt = require("bcrypt");
 const auth = require("../middlewares/jwt");
 var mongoose = require("mongoose");
 mongoose.set("useFindAndModify", false);
@@ -652,7 +652,7 @@ exports.forgetPasswordOtp = [
 							  if (res.error) throw new Error(res.error);
 							
 							  console.log(res1.body);
-							  return apiResponse.successResponseWithData(res, "Otp is sent on your register mobile number", {validUser:true,otpSent:true,otp:otp});
+							  return apiResponse.successResponseWithData(res, "Otp is sent on your mobile number", {validUser:true,otpSent:true,otp:otp});
 							});
 							
 						}
@@ -661,6 +661,43 @@ exports.forgetPasswordOtp = [
 				} else {
 					return apiResponse.successResponseWithData(res, "User is not exist please signup", {validUser:false,otpSent:false,otp:''});
 				}
+				
+
+		}
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
+/* forgetPasswordOtp **/
+exports.resetPassword = [
+    //verifyUser,
+	body("mobile").isLength({ min: 10 }).trim().withMessage("Mobile number must be 10 characters or greater.")
+		.isNumeric().withMessage("Mobile number has non-numeric characters."),
+     async(req, res) => {
+		
+		try {
+			const errors = validationResult(req);
+			if (!errors.isEmpty()) {
+				// Display sanitized values/errors messages.
+				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
+			}else {
+				bcrypt.hash(req.body.password,10,  async(err, hash)=> {
+					UserModel.updateOne({mobile:req.body.mobile},{
+						$set:{
+							password:hash
+						}
+					}).then((updateUser)=>{
+						if(updateUser != null){
+							return apiResponse.successResponseWithData(res, "Password reset successfully", {resetPassword:true});
+						} else {
+							return apiResponse.successResponseWithData(res, "Password not reset ", {resetPassword:false});
+						}
+					})
+				})
+				
 				
 
 		}
