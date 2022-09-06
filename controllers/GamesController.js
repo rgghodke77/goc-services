@@ -373,7 +373,8 @@ exports.getTeams = [
 							"players.mobile" : 1,
 							"players._id":1,
 							teamName:1,
-							teamLogo:1
+							teamLogo:1,
+							createdBy:1
 
 						} }
 					]).then((teaminfo)=>{
@@ -405,7 +406,8 @@ exports.getTeams = [
 						"players.mobile" : 1,
 						"players._id":1,
 						teamName:1,
-						teamLogo:1
+						teamLogo:1,
+						createdBy:1
 
 					} },
 				]).then((teaminfo)=>{
