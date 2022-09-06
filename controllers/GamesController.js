@@ -152,10 +152,10 @@ exports.mergeRole = [
 exports.mergeTeam = [
     //verifyUser,
 	body("teamName").isLength({ min: 1 }).trim().withMessage("teamName must be specified."),
-	body("gameId").isLength({ min: 1 }).trim().withMessage("gameId must be specified."),
+	// body("gameId").isLength({ min: 1 }).trim().withMessage("gameId must be specified."),
 	body("createdBy").isLength({ min: 1 }).trim().withMessage("createdBy must be specified."),
 	body("players").isArray().withMessage("Players must be array."),
-	function (req, res) {
+	 async(req, res)=> {
 		
 		try {
 			const errors = validationResult(req);
@@ -164,10 +164,11 @@ exports.mergeTeam = [
 				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
 			}else {
 			if(!req.body._id){
+				let defaultGame = await Game.findOne({gameName:'Cricket'});
 				Team.create({
 					teamName: req.body.teamName,
 					teamLogo: req.body.teamLogo,
-					gameId: req.body.gameId,
+					gameId: defaultGame._id,
 					createdBy: req.body.createdBy,
 					
 				})
@@ -233,12 +234,13 @@ exports.mergeTeam = [
 						}
 					});
 				} else {
+					let defaultGame = await Game.findOne({gameName:'Cricket'});
 					Team.update(
 						{_id:utility.generateMongoDbObjectId(req.body._id)},
 						{$set:{
 							teamName: req.body.teamName,
 							teamLogo: req.body.teamLogo,
-							gameId: req.body.gameId,
+							gameId: defaultGame._id,
 							status:req.body.status
 						}}
 					)
