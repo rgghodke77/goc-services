@@ -154,7 +154,7 @@ exports.mergeTeam = [
 	body("teamName").isLength({ min: 1 }).trim().withMessage("teamName must be specified."),
 	// body("gameId").isLength({ min: 1 }).trim().withMessage("gameId must be specified."),
 	body("createdBy").isLength({ min: 1 }).trim().withMessage("createdBy must be specified."),
-	body("players").isArray().withMessage("Players must be array."),
+	body("players").isArray().withMessage("Players must be an array."),
 	 async(req, res)=> {
 		
 		try {
