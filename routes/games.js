@@ -10,6 +10,7 @@ router.post("/getRoles", GamesController.getRoles);
 router.post("/uploadImage", GamesController.uploadImage);
 router.post("/mergeTeam", GamesController.mergeTeam);
 router.post("/getTeams", GamesController.getTeams);
+router.post("/getMyTeam", GamesController.getMyTeam);
 router.post("/getUserForCreateTeam", GamesController.getUserForCreateTeam);
 router.post("/deleteTeam", GamesController.deleteTeam);
 router.post("/deletePlayer", GamesController.deletePlayer);

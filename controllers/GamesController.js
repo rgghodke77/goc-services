@@ -425,6 +425,86 @@ exports.getTeams = [
 		}
 	}
 ];
+exports.getMyTeam = [
+    //verifyUser,
+	body("userId").isLength({ min: 1 }).trim().withMessage("userId must be specified."),
+    function (req, res) {
+		
+		try {
+			
+				let userId = utility.generateMongoDbObjectId(req.body.userId);
+				
+				Player.aggregate([
+				   {$match : {userId : userId}},
+				   { 
+						$lookup:
+						{
+						from: "users",
+						localField: "userId",
+						foreignField: "_id",
+						as: "users",
+						
+						}
+					},
+					{ $project : { 
+						"captain" : 1,
+						"viceCaptain" : 1,
+						"status" : 1,
+						"playerName" : 1,
+						"playerRole" : 1,
+						"mobile" : 1,
+						"_id":1,
+						"teamId":1,
+
+					} },
+				]).then((playerInfo)=>{
+					if(playerInfo !== null){
+						if(playerInfo.length>0){
+							Team.aggregate([
+								{$match : {_id : playerInfo[0].teamId}},
+								{ 
+									 $lookup:
+									 {
+									 from: "players",
+									 localField: "_id",
+									 foreignField: "teamId",
+									 as: "players",
+									 
+									 }
+								 },
+								 { $project : { 
+									 "players.captain" : 1,
+									 "players.viceCaptain" : 1,
+									 "players.status" : 1,
+									 "players.playerName" : 1,
+									 "players.playerRole" : 1,
+									 "players.mobile" : 1,
+									 "players._id":1,
+									 teamName:1,
+									 teamLogo:1,
+									 createdBy:1
+			 
+								 } },
+							 ]).then((teaminfo)=>{
+								 if(teaminfo !== null){
+									 teaminfo[0].captain = playerInfo[0].captain
+									 return apiResponse.successResponseWithData(res, "Operation success", teaminfo[0]);
+								 }
+							 })
+						} else {
+								return apiResponse.successResponseWithData(res, "You have not been selected by any team yet!", playerInfo);
+						}
+						
+					}
+				})
+			
+		} catch (err) {
+			//throw error in json response with status 500. 
+            console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
 exports.getUserForCreateTeam = [
     //verifyUser,
     function (req, res) {
