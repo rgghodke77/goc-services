@@ -537,6 +537,7 @@ exports.getUserForCreateTeam = [
 						{ $project : { 
 							firstName:1,
 							lastName:1,
+							mobile:1,
 							_id:1,
 							"players.playerName":1
 
