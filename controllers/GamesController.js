@@ -555,6 +555,7 @@ exports.getUserForCreateTeam = [
 		}
 	}
 ];
+
 exports.getRoles = [
     //verifyUser,
     function (req, res) {
