@@ -168,6 +168,7 @@ exports.mergeTeam = [
 				Team.create({
 					teamName: req.body.teamName,
 					teamLogo: req.body.teamLogo,
+					teamSlogan: req.body.teamSlogan,
 					gameId: defaultGame._id,
 					createdBy: req.body.createdBy,
 					
@@ -212,7 +213,8 @@ exports.mergeTeam = [
 													"players.mobile" : 1,
 													"players._id":1,
 													teamName:1,
-													teamLogo:1
+													teamLogo:1,
+													teamSlogan:1
 
 												 } }
 											]).then((teaminfo)=>{
@@ -240,6 +242,7 @@ exports.mergeTeam = [
 						{$set:{
 							teamName: req.body.teamName,
 							teamLogo: req.body.teamLogo,
+							teamSlogan: req.body.teamSlogan,
 							gameId: defaultGame._id,
 							status:req.body.status
 						}}
@@ -313,7 +316,8 @@ exports.mergeTeam = [
 													"players.mobile" : 1,
 													"players._id":1,
 													teamName:1,
-													teamLogo:1
+													teamLogo:1,
+													teamSlogan:1
 
 												 } }
 											]).then((teaminfo)=>{
@@ -376,6 +380,7 @@ exports.getTeams = [
 							"players._id":1,
 							teamName:1,
 							teamLogo:1,
+							teamSlogan:1,
 							createdBy:1
 
 						} }
@@ -409,6 +414,7 @@ exports.getTeams = [
 						"players._id":1,
 						teamName:1,
 						teamLogo:1,
+						teamSlogan:1,
 						createdBy:1
 
 					} },
@@ -482,6 +488,7 @@ exports.getMyTeam = [
 									 "players._id":1,
 									 teamName:1,
 									 teamLogo:1,
+									 teamSlogan:1,
 									 createdBy:1
 			 
 								 } },
