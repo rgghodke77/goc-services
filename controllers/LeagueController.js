@@ -115,7 +115,7 @@ exports.mergeLeague = [
 exports.leagueTeam = [
 
 	body("leagueId").isLength({ min: 1 }).trim().withMessage("leagueId must be specified"),
-	body("leagueName").isLength({ min: 1 }).trim().withMessage("leagueName must be specified"),
+	body("teamName").isLength({ min: 1 }).trim().withMessage("teamName must be specified"),
 	body("teamId").isLength({ min: 1 }).trim().withMessage("teamId must be specified"),
 	async (req, res) => {
 		try {
@@ -133,15 +133,17 @@ exports.leagueTeam = [
 					else{ 
 
 					
-					let existingTeamInLeague = await LeagueTeam.findOne({ $and: [{ _id: req.body.leagueId }, { leagueName: req.body.leagueName }] });
+					let existingTeamInLeague = await LeagueTeam.findOne({ $and: [{ leagueId: req.body.leagueId }, { teamName: req.body.teamName }] });
 
-					if (existingTeamInLeague == null) {
+					if (existingTeamInLeague !== null) {
 
-
+						return apiResponse.validationErrorWithData(res, "Team Name already exists", errors.array());
+					}
+					else{
 						LeagueTeam.create({
 							teamId: req.body.teamId,
 							leagueId: req.body.leagueId,
-							leagueName: req.body.leagueName
+							teamName:req.body.teamName
 						}).then((leagueteam) => {
 							if (leagueteam !== null) {
 								return apiResponse.successResponseWithData(res, "Operation Success", leagueteam)
@@ -150,11 +152,6 @@ exports.leagueTeam = [
 								return apiResponse.successResponse(res, "Operation Success", {})
 							}
 						})
-
-					}
-
-					else{
-						return apiResponse.validationErrorWithData(res, "league Name already exists", errors.array());
 
 					}
 
