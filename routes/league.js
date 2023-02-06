@@ -5,6 +5,7 @@ var router = express.Router();
 
 router.post("/mergeLeague", LeagueController.mergeLeague);
 router.post("/getLeagues", LeagueController.getLeagues);
+router.post("/addTeamsToLeague", LeagueController.leagueTeam);
 
 
 module.exports = router;

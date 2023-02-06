@@ -47,7 +47,6 @@ exports.gamesList = [
 		}
 	}
 ];
-
 /**
  * Book Detail.
  * 
@@ -147,7 +146,6 @@ exports.mergeRole = [
 		}
 	}
 ];
-
 /** Create Modify team */
 exports.mergeTeam = [
     //verifyUser,
@@ -562,7 +560,6 @@ exports.getUserForCreateTeam = [
 		}
 	}
 ];
-
 exports.getRoles = [
     //verifyUser,
     function (req, res) {
@@ -583,7 +580,6 @@ exports.getRoles = [
 		}
 	}
 ];
-
 /* delete team **/
 exports.deleteTeam = [
     //verifyUser,
@@ -801,9 +797,7 @@ exports.resetPassword = [
 		}
 	}
 ];
-
 /** Upload Images */
-
 const imageStorage = multer.diskStorage({
     // Destination to store image     
     destination: 'assets/images/userUploads', 
@@ -842,7 +836,6 @@ exports.uploadImage = [
 		}
 	}
 ]
-
 /**
  * Book store.
  * 
