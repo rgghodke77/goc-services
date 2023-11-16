@@ -112,7 +112,7 @@ exports.mergeLeague = [
 	}
 ];
 
-exports.leagueTeam = [
+exports.addTeamToLeagues = [
 
 	body("leagueId").isLength({ min: 1 }).trim().withMessage("leagueId must be specified"),
 	body("teamName").isLength({ min: 1 }).trim().withMessage("teamName must be specified"),
@@ -124,41 +124,38 @@ exports.leagueTeam = [
 				return apiResponse.validationErrorWithData(res, "Validation Error", errors.array());
 			}
 			else {
-				if (!req.body._id) {
-					let uniqueLeagueId = await League.findOne({_id: req.body.leagueId})
-					if(uniqueLeagueId == null){
+					let uniqueLeagueId = await League.findOne({ _id: req.body.leagueId })
+					if (uniqueLeagueId == null) {
 						return apiResponse.validationErrorWithData(res, "League doesn't exist", errors.array());
 
 					}
-					else{ 
+					else {
+						let existingTeamInLeague = await LeagueTeam.findOne({ $and: [{ leagueId: req.body.leagueId }, { teamName: req.body.teamName }] });
 
-					
-					let existingTeamInLeague = await LeagueTeam.findOne({ $and: [{ leagueId: req.body.leagueId }, { teamName: req.body.teamName }] });
+						if (existingTeamInLeague !== null) {
 
-					if (existingTeamInLeague !== null) {
+							return apiResponse.validationErrorWithData(res, "Team Name already exists", errors.array());
+						}
+						else {
+							LeagueTeam.create({
+								teamId: req.body.teamId,
+								leagueId: req.body.leagueId,
+								teamName: req.body.teamName
+							}).then((leagueteam) => {
+								if (leagueteam !== null) {
+									return apiResponse.successResponseWithData(res, "Operation Success", leagueteam)
+								}
+								else {
+									return apiResponse.successResponse(res, "Operation Success", {})
+								}
+							})
 
-						return apiResponse.validationErrorWithData(res, "Team Name already exists", errors.array());
+						}
+
 					}
-					else{
-						LeagueTeam.create({
-							teamId: req.body.teamId,
-							leagueId: req.body.leagueId,
-							teamName:req.body.teamName
-						}).then((leagueteam) => {
-							if (leagueteam !== null) {
-								return apiResponse.successResponseWithData(res, "Operation Success", leagueteam)
-							}
-							else {
-								return apiResponse.successResponse(res, "Operation Success", {})
-							}
-						})
+				
 
-					}
-
-				}
 			}
-		
-		}
 		}
 		catch (err) {
 			return apiResponse.ErrorResponse(res, err)
@@ -167,6 +164,36 @@ exports.leagueTeam = [
 
 ];
 
+exports.getLeagueTeams = [
+	body("leagueId").isLength({ min: 1 }).trim().withMessage("leagueId must be specified"),
+	function (req, res) {
+		try {
+				let LeagueId = utility.generateMongoDbObjectId(req.body._id);
+				LeagueTeam.aggregate([
+					{ $match: { leagueId: LeagueId } },
+					{
+						$project: {
+							leagueId: 1,
+							teamId: 1,
+							teamName: 1
+
+						}
+					}
+				]).then((leagueTeamdata) => {
+					if (leagueTeamdata !== null) {
+
+
+						return apiResponse.successResponseWithData(res, "Data successfully fetched from the League", leagueTeamdata)
+					}
+				})
+			
+		}
+		catch (err) {
+			console.log(err)
+			return apiResponse.ErrorResponse(res, err);
+		}
+	}
+];
 exports.getLeagues = [
 	//verifyUser,
 	function (req, res) {
