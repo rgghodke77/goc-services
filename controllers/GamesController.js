@@ -170,8 +170,7 @@ exports.mergeTeam = [
 					gameId: defaultGame._id,
 					createdBy: req.body.createdBy,
 					
-				})
-					.then((team)=>{                
+				}).then((team)=>{                
 						if(team !== null){
 							// return apiResponse.successResponseWithData(res, "Operation success", team);
 							UserModel.findOne({_id:req.body.createdBy}).then((user)=>{

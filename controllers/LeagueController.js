@@ -6,6 +6,7 @@ const Player = require("../models/PlayerModel");
 const UserModel = require("../models/UserModel");
 const League = require("../models/LeagueModel");
 const LeagueTeam = require("../models/LeagueTeamsModel");
+const LeagueMatch = require("../models/LeagueMatchesModel");
 const { body, validationResult } = require("express-validator");
 var unirest = require("unirest");
 const { sanitizeBody } = require("express-validator");
@@ -18,7 +19,7 @@ var verifyUser = require('../middlewares/authentication')
 const multer = require('multer');
 const path = require('path');
 var utility = require('../helpers/utility');
-
+var moment = require('moment')
 /**
  * Merge league.
  * 
@@ -46,7 +47,7 @@ exports.mergeLeague = [
 			if (!errors.isEmpty()) {
 				// Display sanitized values/errors messages.
 				return apiResponse.validationErrorWithData(res, "Validation Error.", errors.array());
-			} else {
+			} else {``
 				if (!req.body._id) {
 					League.create({
 						leagueName: req.body.leagueName,
@@ -113,7 +114,6 @@ exports.mergeLeague = [
 ];
 
 exports.addTeamToLeagues = [
-
 	body("leagueId").isLength({ min: 1 }).trim().withMessage("leagueId must be specified"),
 	body("teamName").isLength({ min: 1 }).trim().withMessage("teamName must be specified"),
 	body("teamId").isLength({ min: 1 }).trim().withMessage("teamId must be specified"),
@@ -259,3 +259,174 @@ exports.getLeagues = [
 		}
 	}
 ];
+
+// const shuffleArray = ((array) =>{
+//     for (var i = array.length - 1; i > 0; i--) {
+//         var j = Math.floor(Math.random() * (i + 1));
+// 		console.log(j,"random")
+//         var temp = array[i];
+//         array[i] = array[j];
+//         array[j] = temp;
+//     }
+
+// });
+
+const getShuffledArr = arr => {
+    const newArr = arr.slice()
+    for (let i = newArr.length - 1; i > 0; i--) {
+        const rand = Math.floor(Math.random() * (i + 1));
+        [newArr[i], newArr[rand]] = [newArr[rand], newArr[i]];
+    }
+    return newArr
+};
+
+const getDatesInRange = ((startDate, endDate)=> {
+	const date = new Date(startDate.getTime());
+	const dates = [];
+	while (date <= endDate) {
+	  dates.push(new Date(date));
+	  date.setDate(date.getDate() + 1);
+	}
+	return dates;
+  });
+  
+//   const d1 = new Date('2022-01-18');
+//   const d2 = new Date('2022-01-24');
+  
+//   console.log(getDatesInRange(d1, d2));
+  function randomIntFromInterval(min, max) { // min and max included 
+  return Math.floor(Math.random() * (max - min + 1) + min)
+}
+
+const rndInt = randomIntFromInterval(1, 6)
+exports.createFixtures = [
+	body("leagueId").isLength({ min: 1 }).trim().withMessage("leagueId must be specified"),
+	async (req , res) => {
+		try {
+			const errors = validationResult(req);
+			if(!errors.isEmpty()){
+				return apiResponse.validationErrorWithData(res, "Validation Error", errors.array())
+			}
+			else {
+				const selectedLeagueDetails = await LeagueTeam.find({ leagueId : req.body.leagueId});
+				const LeagueDetails = await League.find({ _id : req.body.leagueId});
+				console.log(LeagueDetails,"LeagueDetails");
+				let startDate = moment(LeagueDetails[0].startDate).format("YYYY MMM DD");
+				let endDate = moment(LeagueDetails[0].endDate).format("YYYY MMM DD");
+				var Dates = getDatesInRange(new Date(startDate), new Date(endDate));
+				const mutabledates = Dates;
+				console.log(Dates,startDate,endDate,"Dates");
+				var leagueFixtures = [];
+				var shuffledLeague ;
+                 console.log(selectedLeagueDetails,"selectedLeagueDetails");
+				if(selectedLeagueDetails.length > 0 && selectedLeagueDetails.length % 2 == 0){
+					for(i=0 ; i < selectedLeagueDetails.length ; i+=2 ){
+						for(j = i+1 ; j < selectedLeagueDetails.length ; j++){
+							
+							leagueFixtures.push({
+								leagueId : req.body.leagueId,
+								teamAId : selectedLeagueDetails[i].teamId,
+								teamBId : selectedLeagueDetails[j].teamId,
+								teamAName : selectedLeagueDetails[i].teamName,
+								teamBName: selectedLeagueDetails[j].teamName,
+								status : 0,
+							})
+							break;				
+						}
+					}
+					 shuffledLeague = await getShuffledArr(leagueFixtures);
+					shuffledLeague.forEach(element => {
+						const dateCustom = mutabledates[0];
+							console.log(mutabledates,mutabledates.length,"dateCustom");
+							mutabledates.shift();
+							element.MatchDate = dateCustom
+					});
+
+					console.log(shuffledLeague,"leagueFixtures")				
+				}
+				else if(selectedLeagueDetails.length > 0 && selectedLeagueDetails.length % 2 !== 0){
+					for(i=0 ; i < selectedLeagueDetails.length ; i++ ){
+						for(j = i+1 ; j < selectedLeagueDetails.length ; j++){
+							// console.log(customDate,mutabledates,mutabledates)
+							leagueFixtures.push({
+								leagueId : req.body.leagueId,
+								teamAId : selectedLeagueDetails[i].teamId,
+								teamBId : selectedLeagueDetails[j].teamId,
+								teamAName : selectedLeagueDetails[i].teamName,
+								teamBName: selectedLeagueDetails[j].teamName,
+								status : 0,
+
+							})
+						}
+					}
+
+					 shuffledLeague = getShuffledArr(leagueFixtures);
+					shuffledLeague.forEach(element => {
+						const dateCustom = mutabledates[0];
+							console.log(mutabledates,mutabledates.length,"dateCustom");
+							mutabledates.shift();
+							element.MatchDate = dateCustom;
+					})
+					console.log(shuffledLeague,"shuffledleagueDetails")
+
+				}
+				if(shuffledLeague.length > 0){
+					LeagueMatch.insertMany(shuffledLeague).then((fixture)=>{
+						if(fixture !== null){
+							return apiResponse.successResponseWithData(res, "Operation success" , fixture)
+						}
+						else{
+							return apiResponse.successResponseWithData(res, "Operation success" , [])
+						}
+
+					})
+				}
+			}
+		}
+		catch (err){
+			return apiResponse.ErrorResponse(res, err)
+
+		}
+	}
+]
+
+exports.getLeagueFixtures = [
+	body("leagueId").isLength({ min: 1 }).trim().withMessage("leagueId must be specified"),
+   async (req, res)=>{
+	try{
+		console.log("shaik");
+		const errors = validationResult(req);
+		if(!errors.isEmpty()){
+			return apiResponse.validationErrorWithData(req,"Validation Error", errors.array() )
+		}
+		else{
+			// const selectedLeagueDetails = await LeagueTeam.findOne({leagueId : req.body.leagueId});
+			let LeagueId = utility.generateMongoDbObjectId(req.body.leagueId);
+
+			LeagueMatch.aggregate([
+				{$match : {leagueId : LeagueId}},
+				{
+					$project : {
+						leagueId : 1,
+						teamAId : 1,
+						teamAName :1,
+						teamBId : 1,
+						teamBName : 1,
+						status : 1,
+						MatchDate :1
+					}
+				}
+			]).then((matches)=>{
+				if(matches !== null){
+					return apiResponse.successResponseWithData(res, "Data fetched successfully", matches)
+				}
+
+			})
+		}
+	}
+	catch(err){
+		return apiResponse.ErrorResponse(res, err)
+	}
+   }
+
+]
